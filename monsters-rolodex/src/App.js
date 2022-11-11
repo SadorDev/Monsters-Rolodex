@@ -1,75 +1,49 @@
-import "./App.css";
-import { Component } from "react";
+import { useState, useEffect } from "react";
+
 import CardList from "./Components/Card-list/card-list-component";
+import SearchBox from "./Components/Search-Box/search-box";
+import "./App.css";
 
-class App extends Component {
-  constructor() {
-    super();
+const App = () => {
+  const [searchField, setSearchField] = useState("");
+  const [monsters, setMonsters] = useState([]);
+  const [filteredMonsters, setFilterMonsters] = useState(monsters);
 
-    this.state = {
-      monsters: [],
-      searchField: "",
-    };
-  }
+  useEffect(() => {
+    fetch("https://jsonplaceholder.typicode.com/users")
+      .then((response) => response.json())
+      .then((users) => setMonsters(users));
+  }, [])
 
-  // The link is a promise which is asynchronous. Essentially a promise is a promise that we're going to return a value.
-  componentDidMount() {
-    fetch("https://jsonplaceholder.typicode.com/users").then((response) =>
-      response.json().then((users) =>
-        this.setState(() => {
-          return { monsters: users };
-        })
-      )
-    );
-  }
+  useEffect(() => {
+    console.log(filteredMonsters);
+  }, [filteredMonsters])
 
-  // This was created to optimize performance
-  onSearchChange = (event) => {
-    const searchField = event.target.value.toLocaleLowerCase();
-    // This sets monster as the value, and is it going to recieve a callback
-    // and going to pass and call the callback on each element in the array
-    this.setState(() => {
-      return { searchField };
-    });
+  useEffect(() => {
+    const newFilteredMonsters = monsters.filter((monster) => {
+      return monster.name.toLocaleLowerCase().includes(searchField);
+    }, []);
+
+    setFilterMonsters(newFilteredMonsters);
+  }, [monsters, searchField]);
+
+  const onSearchChange = (event) => {
+    const searchFieldString = event.target.value.toLocaleLowerCase();
+    setSearchField(searchFieldString);
   };
 
-  render() {
-    // These were created for optimization - we removed this and state from the two variables
-    const { monsters, searchField } = this.state;
-    const { onSearchChange } = this;
+  return (
+    <div className="App">
+      <h1 className="app-title">Monsters Rolodex</h1>
 
-    const filteredMonsters = monsters.filter((el) =>
-      el.name.toLowerCase().includes(searchField.toLowerCase())
-    );
+      <SearchBox
+        className="monsters-search-box"
+        onChangeHandler={onSearchChange}
+        placeholder="search monsters"
+      />
+      <CardList monsters={filteredMonsters && filteredMonsters} />
+    </div>
+  );
+};
 
-    return (
-      <div className="App">
-        <input
-          className="search"
-          type="search"
-          placeholder="Search Monsters"
-          // This is an anonymous function
-          onChange={onSearchChange}
-        />
-
-        {/* We don't need this as since we created the Card List Component.  */}
-
-        {/* {filteredMonsters.map((monster) => {
-          return (
-            <div key={monster.id}>
-              <h1> {monster.name}</h1>
-            </div>
-          );
-        })} */}
-
-        {/* This component shouldn't have to think about 
-        filtering its monster list. It only cares about what it's 
-        going to display. So we use the "monster" prop so it can 
-        render it to the UI*/}
-
-        <CardList monsters={filteredMonsters} />
-      </div>
-    );
-  }
-}
 export default App;
